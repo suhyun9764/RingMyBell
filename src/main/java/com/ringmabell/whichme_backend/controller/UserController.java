@@ -1,9 +1,8 @@
 package com.ringmabell.whichme_backend.controller;
 
-import com.ringmabell.whichme_backend.dto.RegisterDto;
-import com.ringmabell.whichme_backend.entitiy.User;
+import com.ringmabell.whichme_backend.dto.JoinDto;
 import com.ringmabell.whichme_backend.service.UserService;
-import java.net.http.HttpResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,14 +17,9 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/join")
-    public ResponseEntity<String> join(@RequestBody RegisterDto registerDto) {
-        try {
-            userService.saveUser(registerDto);
-            return ResponseEntity.ok("회원가입이 성공적으로 완료되었습니다");
-        }catch (Exception e){
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-
+    public ResponseEntity join(@RequestBody @Valid JoinDto joinDto) {
+        userService.saveUser(joinDto);
+        return ResponseEntity.ok().build();
     }
 
 
