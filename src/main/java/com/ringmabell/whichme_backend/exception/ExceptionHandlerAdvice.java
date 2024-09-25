@@ -72,13 +72,13 @@ public class ExceptionHandlerAdvice {
     }
 
     //중복 회원 예외처리
-    @ExceptionHandler(DuplicateUserException.class)
-    public ResponseEntity handleHttpClientErrorException(DuplicateUserException e) {
-        log.error("[DuplicateMemberException : Conflict] cause: {}, message: {}",
+    @ExceptionHandler(DuplicateException.class)
+    public ResponseEntity handleDuplicateException(DuplicateException e) {
+        log.error("[DuplicateException : Conflict] cause: {}, message: {}",
                 NestedExceptionUtils.getMostSpecificCause(e), e.getMessage());
         ErrorCode errorCode = UserErrorCode.USER_ALREADY_EXISTS_ERROR;
         ErrorResponse errorResponse = ErrorResponse.of(errorCode.getHttpStatus(), errorCode.getCode(),
-                e.getMessage() + errorCode.getMessage());
+                e.getMessage());
         return ResponseEntity.status(errorCode.getHttpStatus()).body(errorResponse);
     }
 
