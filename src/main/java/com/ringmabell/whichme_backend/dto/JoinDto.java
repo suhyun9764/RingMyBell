@@ -1,26 +1,45 @@
 package com.ringmabell.whichme_backend.dto;
 
+import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.EMAIL_REGEX;
+import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.PASSWORD_MAX_LENGTH;
+import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.PASSWORD_MIN_LENGTH;
+import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.PASSWORD_REGEX;
+import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.USERNAME_MAX_LENGTH;
+import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.USERNAME_MIN_LENGTH;
+import static com.ringmabell.whichme_backend.constants.UserMessages.EMAIL_POLICY_MESSAGE;
+import static com.ringmabell.whichme_backend.constants.UserMessages.NOT_BLANK_MESSAGE;
+import static com.ringmabell.whichme_backend.constants.UserMessages.PASSWORD_POLICY_MESSAGE;
+import static com.ringmabell.whichme_backend.constants.UserMessages.USERNAME_POLICY_MESSAGE;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 
 @Getter
 public class JoinDto {
 
     @NotBlank
+    @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH, message = USERNAME_POLICY_MESSAGE)
     private String username;
-    @NotBlank
-    private String password;
-    @NotBlank
-    private String realName;
-    @NotBlank
+    @NotBlank(message = NOT_BLANK_MESSAGE)
+    @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH, message = PASSWORD_POLICY_MESSAGE)
     @Pattern(
-            regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$"
+            regexp = PASSWORD_REGEX,
+            message = PASSWORD_POLICY_MESSAGE
+    )
+    private String password;
+    @NotBlank(message = NOT_BLANK_MESSAGE)
+    private String realName;
+    @NotBlank(message = NOT_BLANK_MESSAGE)
+    @Pattern(
+            regexp = EMAIL_REGEX,
+            message = EMAIL_POLICY_MESSAGE
     )
     private String email;
-    @NotBlank
+    @NotBlank(message = NOT_BLANK_MESSAGE)
     private String phone;
-    @NotBlank
+    @NotBlank(message = NOT_BLANK_MESSAGE)
     private String address;
 
 }
