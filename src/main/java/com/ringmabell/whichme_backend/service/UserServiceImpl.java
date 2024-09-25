@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,9 +23,9 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public void saveUser(JoinDto joinDto) {
         validateJoinDto(joinDto);
-
         User userData = User.builder()
                 .username(joinDto.getUsername())
                 .password(passwordEncoder.encode(joinDto.getPassword()))
