@@ -1,8 +1,6 @@
 package com.ringmabell.whichme_backend.controller;
 
-import com.ringmabell.whichme_backend.dto.EmailValidateDto;
 import com.ringmabell.whichme_backend.dto.JoinDto;
-import com.ringmabell.whichme_backend.dto.UsernameValidateDto;
 import com.ringmabell.whichme_backend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,14 +24,14 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/validate/username")
-    public ResponseEntity<Boolean> validateUsername(@RequestParam @Valid  UsernameValidateDto usernameValidateDto ){
-        return ResponseEntity.ok(userService.isAvailableUsername(usernameValidateDto));
+    @GetMapping("/validate/username")   // 아이디 중복확인
+    public ResponseEntity<Boolean> validateUsername(@RequestParam("username") String username) {
+        return ResponseEntity.ok(userService.isAvailableUsername(username));
     }
 
-    @GetMapping("/validate/email")
-    public ResponseEntity<Boolean> validateUsername(@RequestParam @Valid EmailValidateDto emailValidateDto){
-        return ResponseEntity.ok(userService.isAvailableEmail(emailValidateDto));
+    @GetMapping("/validate/email")  // 이메일 중복확인
+    public ResponseEntity<Boolean> validateEmail(@RequestParam("email") String email) {
+        return ResponseEntity.ok(userService.isAvailableEmail(email));
     }
 
 

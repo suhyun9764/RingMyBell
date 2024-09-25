@@ -1,10 +1,16 @@
 package com.ringmabell.whichme_backend.service;
 
-import com.ringmabell.whichme_backend.dto.EmailValidateDto;
+import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.EMAIL_REGEX;
+import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.USERNAME_MAX_LENGTH;
+import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.USERNAME_MIN_LENGTH;
+import static com.ringmabell.whichme_backend.constants.UserMessages.ALREADY_EXIST_EMAIL;
+import static com.ringmabell.whichme_backend.constants.UserMessages.ALREADY_EXIST_USERNAME;
+
 import com.ringmabell.whichme_backend.dto.JoinDto;
-import com.ringmabell.whichme_backend.dto.UsernameValidateDto;
 import com.ringmabell.whichme_backend.entitiy.User;
+import com.ringmabell.whichme_backend.exception.DuplicateException;
 import com.ringmabell.whichme_backend.repository.UserRepository;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,6 +23,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void saveUser(JoinDto joinDto) {
+        validateJoinDto(joinDto);
+
         User userData = User.builder()
                 .username(joinDto.getUsername())
                 .password(passwordEncoder.encode(joinDto.getPassword()))
@@ -31,19 +39,39 @@ public class UserServiceImpl implements UserService {
         userRepository.save(userData);
     }
 
+    private void validateJoinDto(JoinDto joinDto) {
+        if (userRepository.existsByUsername(joinDto.getUsername())) {
+            throw new DuplicateException(ALREADY_EXIST_USERNAME);
+        }
+
+        if (userRepository.existsByEmail(joinDto.getEmail())) {
+            throw new DuplicateException(ALREADY_EXIST_EMAIL);
+        }
+    }
+
     @Override
-    public Boolean isAvailableUsername(UsernameValidateDto usernameValidateDto) {
-        if(userRepository.existsByUsername(usernameValidateDto.getUsername()))
+    public Boolean isAvailableUsername(String username) {
+        if (userRepository.existsByUsername(username)) {
             return false;
+        }
+        if (username.length() < USERNAME_MIN_LENGTH || username.length() > USERNAME_MAX_LENGTH) {
+            return false;
+        }
 
         return true;
     }
 
     @Override
-    public Boolean isAvailableEmail(EmailValidateDto emailValidateDto) {
-        if(userRepository.existsByEmail(emailValidateDto.getEmail()))
+    public Boolean isAvailableEmail(String email) {
+        Pattern emailPattern = Pattern.compile(EMAIL_REGEX);
+        if (emailPattern.matcher(email).matches() == false) {
             return false;
+        }
 
-        return null;
+        if (userRepository.existsByEmail(email)) {
+            return false;
+        }
+
+        return true;
     }
 }
