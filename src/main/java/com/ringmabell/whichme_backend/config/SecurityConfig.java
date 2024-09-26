@@ -2,28 +2,67 @@ package com.ringmabell.whichme_backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.ringmabell.whichme_backend.jwt.JwtFilter;
+import com.ringmabell.whichme_backend.jwt.JwtUtil;
+import com.ringmabell.whichme_backend.jwt.LoginFilter;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
-@EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+	private final AuthenticationConfiguration authenticationConfiguration;
+	private final JwtUtil jwtUtil;
+	private final UserDetailsService userDetailsService;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // 로그인 관련 기능 비활성화
-        http
-                .csrf((auth)->auth.disable())// 필요 시 CSRF 보호 비활성화
-                .formLogin((auth)-> auth.disable());  // 기본 로그인 폼 비활성화
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		// 로그인 관련 기능 비활성화
+		http
+			.csrf((auth) -> auth.disable())// 필요 시 CSRF 보호 비활성화
+			.formLogin((auth) -> auth.disable())  // 기본 로그인 폼 비활성화
+			.httpBasic((auth) -> auth.disable());
 
-        return http.build();
-    }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();  // 비밀번호 암호화에 사용할 BCryptPasswordEncoder
-    }
+		// 로그인 필터(성공시 jwt 발급)후 jwt 검증
+		http
+			.addFilterAfter(new JwtFilter(jwtUtil), LoginFilter.class);
+
+		LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration),jwtUtil,userDetailsService);
+		loginFilter.setFilterProcessesUrl("/api/user/login");
+
+		// UsernamePasswordAuthenticationFilter 대신 custom한 LoginFilter 적용
+		http
+			.addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
+
+		// JWT 방식이므로 서버에서 클라이언트의 세션 정보를 저장하지 않음
+		// 클라이언트는 매 요청 시 JWT를 포함해야 하며, 서버는 이를 검증하여 인증을 처리함
+
+		http
+			.sessionManagement((session)->session
+				.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+		return http.build();
+	}
+
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws
+		Exception {
+		return authenticationConfiguration.getAuthenticationManager();
+	}
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();  // 비밀번호 암호화에 사용할 BCryptPasswordEncoder
+	}
 }
