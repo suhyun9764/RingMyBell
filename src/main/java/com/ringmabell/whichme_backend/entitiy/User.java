@@ -2,6 +2,8 @@ package com.ringmabell.whichme_backend.entitiy;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -38,6 +40,10 @@ public class User {
 
 	@Column(nullable = false)
 	private String address;
+
+	@Column(nullable = false)
+	@Enumerated(EnumType.STRING)
+	private Role role;
 
 	@Column(nullable = false)
 	private String provider;
