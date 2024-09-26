@@ -52,7 +52,7 @@ public class ExceptionHandlerAdvice {
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.error("[MethodArgumentNotValidException] cause : {}, message:{}",
                 NestedExceptionUtils.getMostSpecificCause(e), e.getMessage());
-        ErrorCode errorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
+        ErrorCode errorCode = CommonErrorCode.INVALID_ARGUMENT_ERROR;
         ErrorResponse errorResponse = ErrorResponse.of(errorCode.getHttpStatus(), errorCode.getCode(),
                 errorCode.getMessage(),
                 e.getBindingResult());
