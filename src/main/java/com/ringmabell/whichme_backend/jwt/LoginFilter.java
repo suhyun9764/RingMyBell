@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ringmabell.whichme_backend.dto.LoginDto;
 import com.ringmabell.whichme_backend.exception.CustomAuthenticationException;
+import com.ringmabell.whichme_backend.response.Response;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,61 +30,69 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 	private final AuthenticationManager authenticationManager;
 	private final JwtUtil jwtUtil;
 	private final UserDetailsService userDetailsService;
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws
 		AuthenticationException {
 		try {
-			LoginDto loginDto = new ObjectMapper().readValue(request.getInputStream(), LoginDto.class);
-
+			LoginDto loginDto = objectMapper.readValue(request.getInputStream(), LoginDto.class);
 			String username = loginDto.getUsername();
 			String password = loginDto.getPassword();
 
+			validateUser(username);
 
-			// 로그인 요청한 아이디로 가입된 유저인지 확인
-			if(userDetailsService.loadUserByUsername(username)==null) {
-				throw new UsernameNotFoundException(INVALID_USERNAME);
-			}
-			// 아이디와 패스워드를 포함하는 인증 토큰 생성
-			UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-				username, password);
-
-			// 인증토큰을 검증하여 유효한 계정이면 Authentication을 반환하고 실패하면 AuthenticationException 발생
-			// 반환된 Authentication은 SecurityContextHolder에 저장
+			UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, password);
 			return authenticationManager.authenticate(authToken);
-
 		} catch (IOException e) {
 			throw new RuntimeException(e);
-		} catch (UsernameNotFoundException e){
+		} catch (UsernameNotFoundException e) {
 			throw new CustomAuthenticationException(e.getMessage());
-		} catch (AuthenticationException e){
+		} catch (AuthenticationException e) {
 			throw new CustomAuthenticationException(INVALID_PASSWORD);
 		}
 	}
 
-	@Override	// 로그인 검증에 성공하면 유저정보(username,role)와 만료시간을 포함한 jwt발급
-	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain, Authentication authentication){
+	private void validateUser(String username) {
+		if (userDetailsService.loadUserByUsername(username) == null) {
+			throw new UsernameNotFoundException(INVALID_USERNAME);
+		}
+	}
+
+	@Override
+	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+		FilterChain filterChain, Authentication authentication) throws IOException {
 		CustomUserDetails customUserDetails = (CustomUserDetails)authentication.getPrincipal();
 		String username = customUserDetails.getUsername();
+		String role = getUserRole(authentication);
 
+		String token = jwtUtil.createJwt(username, role, JWT_EXPIRED_MS);
+		response.addHeader(AUTHORIZATION_HEADER, AUTHORIZATION_PREFIX + token);
+		writeJsonResponse(response, Response.builder()
+			.success(true)
+			.message(COMPLETE_LOGIN)
+			.build());
+	}
+
+	private String getUserRole(Authentication authentication) {
 		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-		GrantedAuthority auth = authorities.iterator().next();
-
-		String role = auth.getAuthority();
-
-		String token = jwtUtil.createJwt(username,role,JWT_EXPIRED_MS);
-
-		response.addHeader(AUTHORIZATION_HEADER,AUTHORIZATION_PREFIX+token);
-
+		return authorities.isEmpty() ? null : authorities.iterator().next().getAuthority();
 	}
 
-	@Override	// 로그인에 실패하면 401과 메세지 반환
-	protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws
-		IOException {
+	@Override
+	protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+		AuthenticationException failed) throws IOException {
 		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		response.setContentType("text/plain; charset=UTF-8");
-		response.setCharacterEncoding("UTF-8");
-		response.getWriter().write(failed.getMessage());
+		writeJsonResponse(response, Response.builder()
+			.success(false)
+			.message(failed.getMessage())
+			.build());
 	}
 
+	private void writeJsonResponse(HttpServletResponse response, Response responseData) throws IOException {
+		response.setContentType("application/json; charset=UTF-8");
+		response.setCharacterEncoding("UTF-8");
+		String jsonResponse = objectMapper.writeValueAsString(responseData);
+		response.getWriter().write(jsonResponse);
+	}
 }

@@ -25,6 +25,44 @@ public class JwtFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
 		FilterChain filterChain) throws ServletException, IOException {
 		String authorization = request.getHeader("Authorization");
+		String token = getToken(request, authorization);
+
+		if (token == null || jwtUtil.isExpired(token)) {
+			filterChain.doFilter(request, response);
+			return;
+		}
+
+		CustomUserDetails customUserDetails = createUserDetails(token);
+
+		UsernamePasswordAuthenticationToken authToken = createAuthToken(
+			customUserDetails);
+
+		// jwt가 검증되었기 떄문에 바로 토큰을 SecurityContextHolder에 저장
+		SecurityContextHolder.getContext().setAuthentication(authToken);
+		filterChain.doFilter(request, response);
+	}
+
+	private static UsernamePasswordAuthenticationToken createAuthToken(
+		CustomUserDetails customUserDetails) {
+		UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+			customUserDetails, null, customUserDetails.getAuthorities());
+		return authToken;
+	}
+
+	private CustomUserDetails createUserDetails(String token) {
+		String username = jwtUtil.getUsername(token);
+		String role = jwtUtil.getRole(token);
+
+		User userData = User.builder()
+			.username(username)
+			.role(Role.valueOf(role))
+			.build();
+
+		CustomUserDetails customUserDetails = new CustomUserDetails(userData);
+		return customUserDetails;
+	}
+
+	private static String getToken(HttpServletRequest request, String authorization) {
 		String token = null;
 
 		if (authorization == null) { // 헤더에 jwt가 없을 경우 쿠키 검색
@@ -37,27 +75,6 @@ public class JwtFilter extends OncePerRequestFilter {
 		} else if (authorization != null || authorization.startsWith("Bearer ")) {
 			token = authorization.split(" ")[1];
 		}
-
-		if (token == null || jwtUtil.isExpired(token)) {
-			filterChain.doFilter(request, response);
-			return;
-		}
-
-		String username = jwtUtil.getUsername(token);
-		String role = jwtUtil.getRole(token);
-
-		User userData = User.builder()
-			.username(username)
-			.role(Role.valueOf(role))
-			.build();
-
-		CustomUserDetails customUserDetails = new CustomUserDetails(userData);
-
-		UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-			customUserDetails, null, customUserDetails.getAuthorities());
-
-		// jwt가 검증되었기 떄문에 바로 토큰을 SecurityContextHolder에 저장
-		SecurityContextHolder.getContext().setAuthentication(authToken);
-		filterChain.doFilter(request, response);
+		return token;
 	}
 }

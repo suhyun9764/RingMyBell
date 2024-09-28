@@ -1,11 +1,12 @@
 package com.ringmabell.whichme_backend.service;
 
 import com.ringmabell.whichme_backend.dto.JoinDto;
+import com.ringmabell.whichme_backend.response.Response;
 
 public interface UserService {
-    void saveUser(JoinDto joinDto);
+	Response saveUser(JoinDto joinDto);
 
-    Boolean isAvailableUsername(String usernameValidateDto);
+	Response isAvailableUsername(String usernameValidateDto);
 
-    Boolean isAvailableEmail(String emailValidateDto);
+	Response isAvailableEmail(String emailValidateDto);
 }
