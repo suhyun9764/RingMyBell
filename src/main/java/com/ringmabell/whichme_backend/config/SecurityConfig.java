@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -16,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.ringmabell.whichme_backend.jwt.JwtFilter;
 import com.ringmabell.whichme_backend.jwt.JwtUtil;
 import com.ringmabell.whichme_backend.jwt.LoginFilter;
+import com.ringmabell.whichme_backend.repository.RefreshTokenRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +25,8 @@ public class SecurityConfig {
 	private final AuthenticationConfiguration authenticationConfiguration;
 	private final JwtUtil jwtUtil;
 	private final UserDetailsService userDetailsService;
+	private final RefreshTokenRepository refreshTokenRepository;
+	private final JwtAuthenticationEntryPoint entryPoint;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -34,12 +36,21 @@ public class SecurityConfig {
 			.formLogin((auth) -> auth.disable())  // 기본 로그인 폼 비활성화
 			.httpBasic((auth) -> auth.disable());
 
+		http
+			.authorizeHttpRequests((auth) -> auth
+				.requestMatchers("/api/user/**").permitAll()
+				.requestMatchers("/api/test/**").hasRole("USER")
+				.anyRequest().authenticated());
 
 		// 로그인 필터(성공시 jwt 발급)후 jwt 검증
 		http
-			.addFilterAfter(new JwtFilter(jwtUtil), LoginFilter.class);
+			.addFilterAfter(new JwtFilter(jwtUtil, refreshTokenRepository), LoginFilter.class);
 
-		LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration),jwtUtil,userDetailsService);
+		http
+			.exceptionHandling(handler -> handler.authenticationEntryPoint(entryPoint));
+
+		LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil,
+			userDetailsService, refreshTokenRepository);
 		loginFilter.setFilterProcessesUrl("/api/user/login");
 
 		// UsernamePasswordAuthenticationFilter 대신 custom한 LoginFilter 적용
@@ -50,7 +61,7 @@ public class SecurityConfig {
 		// 클라이언트는 매 요청 시 JWT를 포함해야 하며, 서버는 이를 검증하여 인증을 처리함
 
 		http
-			.sessionManagement((session)->session
+			.sessionManagement((session) -> session
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 		return http.build();
 	}

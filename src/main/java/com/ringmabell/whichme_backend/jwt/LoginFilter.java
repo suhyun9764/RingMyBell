@@ -17,7 +17,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ringmabell.whichme_backend.dto.LoginDto;
+import com.ringmabell.whichme_backend.entitiy.RefreshToken;
 import com.ringmabell.whichme_backend.exception.CustomAuthenticationException;
+import com.ringmabell.whichme_backend.repository.RefreshTokenRepository;
 import com.ringmabell.whichme_backend.response.Response;
 
 import jakarta.servlet.FilterChain;
@@ -31,6 +33,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 	private final JwtUtil jwtUtil;
 	private final UserDetailsService userDetailsService;
 	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final RefreshTokenRepository refreshTokenRepository;
 
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws
@@ -66,8 +69,15 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 		String username = customUserDetails.getUsername();
 		String role = getUserRole(authentication);
 
+		RefreshToken byUsername = refreshTokenRepository.findByUsername(username);
+		if (byUsername != null)
+			refreshTokenRepository.delete(byUsername);
+
 		String token = jwtUtil.createJwt(username, role, JWT_EXPIRED_MS);
+		String refreshToken = jwtUtil.createRefreshToken(username, role, REFRESH_TOKEN_EXPIRED_MS);
+		refreshTokenRepository.save(new RefreshToken(username, refreshToken));
 		response.addHeader(AUTHORIZATION_HEADER, AUTHORIZATION_PREFIX + token);
+		response.addHeader("Refresh-Token", AUTHORIZATION_PREFIX + refreshToken);
 		writeJsonResponse(response, Response.builder()
 			.success(true)
 			.message(COMPLETE_LOGIN)
