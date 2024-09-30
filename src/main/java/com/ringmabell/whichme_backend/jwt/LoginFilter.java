@@ -32,6 +32,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @RequiredArgsConstructor
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
+
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
@@ -39,35 +40,17 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws
-            AuthenticationException {
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationException {
         try {
             LoginDto loginDto = objectMapper.readValue(request.getInputStream(), LoginDto.class);
-            UsernamePasswordAuthenticationToken authToken = getUsernamePasswordAuthenticationToken(
-                    loginDto);
+            UsernamePasswordAuthenticationToken authToken = createAuthToken(loginDto);
             return authenticationManager.authenticate(authToken);
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } catch (UsernameNotFoundException e) {
-            throw new CustomAuthenticationException(e.getMessage());
+        } catch (UsernameNotFoundException e) { throw new CustomAuthenticationException(e.getMessage());
         } catch (AuthenticationException e) {
             throw new CustomAuthenticationException(INVALID_PASSWORD);
-        }
-    }
-
-    private UsernamePasswordAuthenticationToken getUsernamePasswordAuthenticationToken(LoginDto loginDto) {
-        String username = loginDto.getUsername();
-        String password = loginDto.getPassword();
-
-        validateUser(username);
-
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, password);
-        return authToken;
-    }
-
-    private void validateUser(String username) {
-        if (userDetailsService.loadUserByUsername(username) == null) {
-            throw new UsernameNotFoundException(INVALID_USERNAME);
         }
     }
 
@@ -78,35 +61,18 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String username = customUserDetails.getUsername();
         String role = getUserRole(authentication);
 
-        // 기존 refresh토큰 삭제
-        RefreshToken byUsername = refreshTokenRepository.findByUsername(username);
-        if (byUsername != null) {
-            refreshTokenRepository.delete(byUsername);
-        }
+        deleteExistingRefreshToken(username);
 
-        // 새로운 Access 토큰과 refresh 토큰 생성
         String accessToken = jwtUtil.createJwt(username, role, JWT_EXPIRED_MS);
         String refreshToken = jwtUtil.createRefreshToken(username, role, REFRESH_TOKEN_EXPIRED_MS);
 
-        refreshTokenRepository.save(new RefreshToken(username, refreshToken));
-
-        response.addHeader(AUTHORIZATION_HEADER, AUTHORIZATION_PREFIX + accessToken);
-        Cookie refreshTokenCookie = new Cookie("Refresh-Token", refreshToken);
-        refreshTokenCookie.setHttpOnly(true); // JavaScript에서 접근 불가
-//		refreshTokenCookie.setSecure(true);   // HTTPS에서만 전송 (
-        refreshTokenCookie.setPath("/");      // 애플리케이션의 모든 경로에서 사용 가능
-        refreshTokenCookie.setMaxAge((int) (REFRESH_TOKEN_EXPIRED_MS / 1000)); // 쿠키 유효기간 설정
-        response.addCookie(refreshTokenCookie);
+        saveRefreshToken(username, refreshToken);
+        setAuthHeaders(response, accessToken, refreshToken);
 
         writeJsonResponse(response, Response.builder()
                 .success(true)
                 .message(COMPLETE_LOGIN)
                 .build());
-    }
-
-    private String getUserRole(Authentication authentication) {
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        return authorities.isEmpty() ? null : authorities.iterator().next().getAuthority();
     }
 
     @Override
@@ -117,6 +83,47 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
                 .success(false)
                 .message(failed.getMessage())
                 .build());
+    }
+
+    private UsernamePasswordAuthenticationToken createAuthToken(LoginDto loginDto) {
+        String username = loginDto.getUsername();
+        String password = loginDto.getPassword();
+
+        validateUser(username);
+
+        return new UsernamePasswordAuthenticationToken(username, password);
+    }
+
+    private void validateUser(String username) {
+        if (userDetailsService.loadUserByUsername(username) == null) {
+            throw new UsernameNotFoundException(INVALID_USERNAME);
+        }
+    }
+
+    private String getUserRole(Authentication authentication) {
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        return authorities.isEmpty() ? null : authorities.iterator().next().getAuthority();
+    }
+
+    private void deleteExistingRefreshToken(String username) {
+        RefreshToken existingToken = refreshTokenRepository.findByUsername(username);
+        if (existingToken != null) {
+            refreshTokenRepository.delete(existingToken);
+        }
+    }
+
+    private void saveRefreshToken(String username, String refreshToken) {
+        refreshTokenRepository.save(new RefreshToken(username, refreshToken));
+    }
+
+    private void setAuthHeaders(HttpServletResponse response, String accessToken, String refreshToken) {
+        response.addHeader(AUTHORIZATION_HEADER, AUTHORIZATION_PREFIX + accessToken);
+
+        Cookie refreshTokenCookie = new Cookie("Refresh-Token", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge((int) (REFRESH_TOKEN_EXPIRED_MS / 1000));
+        response.addCookie(refreshTokenCookie);
     }
 
     private void writeJsonResponse(HttpServletResponse response, Response responseData) throws IOException {
