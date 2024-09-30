@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ringmabell.whichme_backend.dto.JoinDto;
 import com.ringmabell.whichme_backend.entitiy.Role;
 import com.ringmabell.whichme_backend.entitiy.User;
-import com.ringmabell.whichme_backend.exception.DuplicateException;
+import com.ringmabell.whichme_backend.exception.exptions.DuplicateException;
 import com.ringmabell.whichme_backend.repository.UserRepository;
 import com.ringmabell.whichme_backend.response.Response;
 

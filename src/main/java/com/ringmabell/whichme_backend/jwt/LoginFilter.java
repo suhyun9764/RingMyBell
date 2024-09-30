@@ -1,11 +1,26 @@
 package com.ringmabell.whichme_backend.jwt;
 
-import static com.ringmabell.whichme_backend.constants.AuthPolicy.*;
-import static com.ringmabell.whichme_backend.constants.UserMessages.*;
+import static com.ringmabell.whichme_backend.constants.AuthPolicy.AUTHORIZATION_HEADER;
+import static com.ringmabell.whichme_backend.constants.AuthPolicy.AUTHORIZATION_PREFIX;
+import static com.ringmabell.whichme_backend.constants.AuthPolicy.JWT_EXPIRED_MS;
+import static com.ringmabell.whichme_backend.constants.AuthPolicy.REFRESH_TOKEN_EXPIRED_MS;
+import static com.ringmabell.whichme_backend.constants.UserMessages.COMPLETE_LOGIN;
+import static com.ringmabell.whichme_backend.constants.UserMessages.INVALID_PASSWORD;
+import static com.ringmabell.whichme_backend.constants.UserMessages.INVALID_USERNAME;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ringmabell.whichme_backend.dto.LoginDto;
+import com.ringmabell.whichme_backend.entitiy.RefreshToken;
+import com.ringmabell.whichme_backend.exception.exptions.CustomAuthenticationException;
+import com.ringmabell.whichme_backend.repository.RefreshTokenRepository;
+import com.ringmabell.whichme_backend.response.Response;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collection;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,84 +30,106 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ringmabell.whichme_backend.dto.LoginDto;
-import com.ringmabell.whichme_backend.exception.CustomAuthenticationException;
-import com.ringmabell.whichme_backend.response.Response;
-
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
-	private final AuthenticationManager authenticationManager;
-	private final JwtUtil jwtUtil;
-	private final UserDetailsService userDetailsService;
-	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	@Override
-	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws
-		AuthenticationException {
-		try {
-			LoginDto loginDto = objectMapper.readValue(request.getInputStream(), LoginDto.class);
-			String username = loginDto.getUsername();
-			String password = loginDto.getPassword();
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RefreshTokenRepository refreshTokenRepository;
 
-			validateUser(username);
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationException {
+        try {
+            LoginDto loginDto = objectMapper.readValue(request.getInputStream(), LoginDto.class);
+            UsernamePasswordAuthenticationToken authToken = createAuthToken(loginDto);
+            return authenticationManager.authenticate(authToken);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (UsernameNotFoundException e) { throw new CustomAuthenticationException(e.getMessage());
+        } catch (AuthenticationException e) {
+            throw new CustomAuthenticationException(INVALID_PASSWORD);
+        }
+    }
 
-			UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, password);
-			return authenticationManager.authenticate(authToken);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} catch (UsernameNotFoundException e) {
-			throw new CustomAuthenticationException(e.getMessage());
-		} catch (AuthenticationException e) {
-			throw new CustomAuthenticationException(INVALID_PASSWORD);
-		}
-	}
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+                                            FilterChain filterChain, Authentication authentication) throws IOException {
+        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
+        String username = customUserDetails.getUsername();
+        String role = getUserRole(authentication);
 
-	private void validateUser(String username) {
-		if (userDetailsService.loadUserByUsername(username) == null) {
-			throw new UsernameNotFoundException(INVALID_USERNAME);
-		}
-	}
+        deleteExistingRefreshToken(username);
 
-	@Override
-	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-		FilterChain filterChain, Authentication authentication) throws IOException {
-		CustomUserDetails customUserDetails = (CustomUserDetails)authentication.getPrincipal();
-		String username = customUserDetails.getUsername();
-		String role = getUserRole(authentication);
+        String accessToken = jwtUtil.createJwt(username, role, JWT_EXPIRED_MS);
+        String refreshToken = jwtUtil.createRefreshToken(username, role, REFRESH_TOKEN_EXPIRED_MS);
 
-		String token = jwtUtil.createJwt(username, role, JWT_EXPIRED_MS);
-		response.addHeader(AUTHORIZATION_HEADER, AUTHORIZATION_PREFIX + token);
-		writeJsonResponse(response, Response.builder()
-			.success(true)
-			.message(COMPLETE_LOGIN)
-			.build());
-	}
+        saveRefreshToken(username, refreshToken);
+        setAuthHeaders(response, accessToken, refreshToken);
 
-	private String getUserRole(Authentication authentication) {
-		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-		return authorities.isEmpty() ? null : authorities.iterator().next().getAuthority();
-	}
+        writeJsonResponse(response, Response.builder()
+                .success(true)
+                .message(COMPLETE_LOGIN)
+                .build());
+    }
 
-	@Override
-	protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-		AuthenticationException failed) throws IOException {
-		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		writeJsonResponse(response, Response.builder()
-			.success(false)
-			.message(failed.getMessage())
-			.build());
-	}
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+                                              AuthenticationException failed) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        writeJsonResponse(response, Response.builder()
+                .success(false)
+                .message(failed.getMessage())
+                .build());
+    }
 
-	private void writeJsonResponse(HttpServletResponse response, Response responseData) throws IOException {
-		response.setContentType("application/json; charset=UTF-8");
-		response.setCharacterEncoding("UTF-8");
-		String jsonResponse = objectMapper.writeValueAsString(responseData);
-		response.getWriter().write(jsonResponse);
-	}
+    private UsernamePasswordAuthenticationToken createAuthToken(LoginDto loginDto) {
+        String username = loginDto.getUsername();
+        String password = loginDto.getPassword();
+
+        validateUser(username);
+
+        return new UsernamePasswordAuthenticationToken(username, password);
+    }
+
+    private void validateUser(String username) {
+        if (userDetailsService.loadUserByUsername(username) == null) {
+            throw new UsernameNotFoundException(INVALID_USERNAME);
+        }
+    }
+
+    private String getUserRole(Authentication authentication) {
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        return authorities.isEmpty() ? null : authorities.iterator().next().getAuthority();
+    }
+
+    private void deleteExistingRefreshToken(String username) {
+        RefreshToken existingToken = refreshTokenRepository.findByUsername(username);
+        if (existingToken != null) {
+            refreshTokenRepository.delete(existingToken);
+        }
+    }
+
+    private void saveRefreshToken(String username, String refreshToken) {
+        refreshTokenRepository.save(new RefreshToken(username, refreshToken));
+    }
+
+    private void setAuthHeaders(HttpServletResponse response, String accessToken, String refreshToken) {
+        response.addHeader(AUTHORIZATION_HEADER, AUTHORIZATION_PREFIX + accessToken);
+
+        Cookie refreshTokenCookie = new Cookie("Refresh-Token", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge((int) (REFRESH_TOKEN_EXPIRED_MS / 1000));
+        response.addCookie(refreshTokenCookie);
+    }
+
+    private void writeJsonResponse(HttpServletResponse response, Response responseData) throws IOException {
+        response.setContentType("application/json; charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        String jsonResponse = objectMapper.writeValueAsString(responseData);
+        response.getWriter().write(jsonResponse);
+    }
 }

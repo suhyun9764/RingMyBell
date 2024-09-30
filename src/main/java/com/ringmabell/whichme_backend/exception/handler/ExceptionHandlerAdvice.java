@@ -1,5 +1,7 @@
-package com.ringmabell.whichme_backend.exception;
+package com.ringmabell.whichme_backend.exception.handler;
 
+import com.ringmabell.whichme_backend.response.ErrorResponse;
+import com.ringmabell.whichme_backend.exception.exptions.DuplicateException;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.ringmabell.whichme_backend.exception.errorcode.ErrorCode;
+import com.ringmabell.whichme_backend.exception.errorcode.ExpiredTokenException;
 import com.ringmabell.whichme_backend.exception.errorcode.common.CommonErrorCode;
 import com.ringmabell.whichme_backend.exception.errorcode.user.UserErrorCode;
 
@@ -78,6 +81,16 @@ public class ExceptionHandlerAdvice {
 		log.error("[EntityNotFoundException] cause:{}, message: {}", NestedExceptionUtils.getMostSpecificCause(e),
 			e.getMessage());
 		ErrorCode errorCode = UserErrorCode.USER_NOT_FOUND_ERROR;
+		ErrorResponse errorResponse = ErrorResponse.of(errorCode.getHttpStatus(), errorCode.getCode(),
+			errorCode.getMessage());
+		return ResponseEntity.status(errorCode.getHttpStatus()).body(errorResponse);
+	}
+
+	@ExceptionHandler(ExpiredTokenException.class)
+	public ResponseEntity handleExpiredTokenException(ExpiredTokenException e) {
+		log.error("[ExpiredTokenException] cause:{}, message: {}", NestedExceptionUtils.getMostSpecificCause(e),
+			e.getMessage());
+		ErrorCode errorCode = UserErrorCode.EXPIRED_TOKEN_EXCEPTION;
 		ErrorResponse errorResponse = ErrorResponse.of(errorCode.getHttpStatus(), errorCode.getCode(),
 			errorCode.getMessage());
 		return ResponseEntity.status(errorCode.getHttpStatus()).body(errorResponse);
