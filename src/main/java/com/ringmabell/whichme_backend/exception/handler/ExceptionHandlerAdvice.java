@@ -1,5 +1,7 @@
-package com.ringmabell.whichme_backend.exception;
+package com.ringmabell.whichme_backend.exception.handler;
 
+import com.ringmabell.whichme_backend.response.ErrorResponse;
+import com.ringmabell.whichme_backend.exception.exptions.DuplicateException;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;

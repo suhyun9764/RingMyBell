@@ -1,4 +1,4 @@
-package com.ringmabell.whichme_backend.exception;
+package com.ringmabell.whichme_backend.exception.exptions;
 
 import org.springframework.security.core.AuthenticationException;
 
