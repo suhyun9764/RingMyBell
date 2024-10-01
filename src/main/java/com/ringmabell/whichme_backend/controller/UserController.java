@@ -2,7 +2,7 @@ package com.ringmabell.whichme_backend.controller;
 
 import static com.ringmabell.whichme_backend.constants.SwaggerExampleResponse.*;
 
-import com.ringmabell.whichme_backend.dto.JoinDto;
+import com.ringmabell.whichme_backend.dto.UserJoinDto;
 import com.ringmabell.whichme_backend.response.ErrorResponse;
 import com.ringmabell.whichme_backend.response.Response;
 import com.ringmabell.whichme_backend.service.UserService;
@@ -66,8 +66,8 @@ public class UserController {
             )
         )
     })
-    public ResponseEntity<Response> join(@RequestBody @Valid JoinDto joinDto) {
-        return ResponseEntity.ok().body(userService.saveUser(joinDto));
+    public ResponseEntity<Response> join(@RequestBody @Valid UserJoinDto userJoinDto) {
+        return ResponseEntity.ok().body(userService.saveUser(userJoinDto));
     }
 
 

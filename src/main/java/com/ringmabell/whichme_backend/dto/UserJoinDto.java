@@ -18,7 +18,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 
 @Getter
-public class JoinDto {
+public class UserJoinDto {
 
     @NotBlank
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH, message = USERNAME_POLICY_MESSAGE)
