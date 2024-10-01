@@ -11,6 +11,7 @@ import static com.ringmabell.whichme_backend.constants.UserMessages.NOT_BLANK_ME
 import static com.ringmabell.whichme_backend.constants.UserMessages.PASSWORD_POLICY_MESSAGE;
 import static com.ringmabell.whichme_backend.constants.UserMessages.USERNAME_POLICY_MESSAGE;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -36,6 +37,7 @@ public class JoinDto {
             regexp = EMAIL_REGEX,
             message = EMAIL_POLICY_MESSAGE
     )
+    @Schema(example = "test@naver.com")
     private String email;
     @NotBlank(message = NOT_BLANK_MESSAGE)
     private String phone;
