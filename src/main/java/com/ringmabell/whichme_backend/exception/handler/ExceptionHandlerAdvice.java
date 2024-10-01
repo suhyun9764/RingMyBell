@@ -48,7 +48,6 @@ public class ExceptionHandlerAdvice {
 			NestedExceptionUtils.getMostSpecificCause(e), e.getMessage());
 		ErrorCode errorCode = CommonErrorCode.INVALID_ARGUMENT_ERROR;
 		ErrorResponse errorResponse = ErrorResponse.of(errorCode.getHttpStatus(), errorCode.getCode(),
-			errorCode.getMessage(),
 			e.getBindingResult());
 
 		return ResponseEntity.status(errorCode.getHttpStatus()).body(errorResponse);
