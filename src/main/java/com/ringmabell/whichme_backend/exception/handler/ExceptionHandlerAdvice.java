@@ -81,7 +81,7 @@ public class ExceptionHandlerAdvice {
 			e.getMessage());
 		ErrorCode errorCode = UserErrorCode.USER_NOT_FOUND_ERROR;
 		ErrorResponse errorResponse = ErrorResponse.of(errorCode.getHttpStatus(), errorCode.getCode(),
-			errorCode.getMessage());
+			e.getMessage());
 		return ResponseEntity.status(errorCode.getHttpStatus()).body(errorResponse);
 	}
 
