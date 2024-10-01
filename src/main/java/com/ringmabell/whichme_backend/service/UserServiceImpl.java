@@ -9,7 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ringmabell.whichme_backend.dto.JoinDto;
+import com.ringmabell.whichme_backend.dto.UserJoinDto;
 import com.ringmabell.whichme_backend.entitiy.Role;
 import com.ringmabell.whichme_backend.entitiy.User;
 import com.ringmabell.whichme_backend.exception.exptions.DuplicateException;
@@ -26,30 +26,30 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public Response saveUser(JoinDto joinDto) {
-		validateUserDetails(joinDto);
-		User user = buildUserFromDto(joinDto);
+	public Response saveUser(UserJoinDto userJoinDto) {
+		validateUserDetails(userJoinDto);
+		User user = buildUserFromDto(userJoinDto);
 		userRepository.save(user);
 		return successResponse(COMPLETE_JOIN);
 	}
 
-	private User buildUserFromDto(JoinDto joinDto) {
+	private User buildUserFromDto(UserJoinDto userJoinDto) {
 		return User.builder()
-			.username(joinDto.getUsername())
-			.password(passwordEncoder.encode(joinDto.getPassword()))
-			.realName(joinDto.getRealName())
-			.email(joinDto.getEmail())
-			.phone(joinDto.getPhone())
-			.address(joinDto.getAddress())
+			.username(userJoinDto.getUsername())
+			.password(passwordEncoder.encode(userJoinDto.getPassword()))
+			.realName(userJoinDto.getRealName())
+			.email(userJoinDto.getEmail())
+			.phone(userJoinDto.getPhone())
+			.address(userJoinDto.getAddress())
 			.role(Role.ROLE_USER)
 			.provider("LOCAL")
 			.providerId(null)
 			.build();
 	}
 
-	private void validateUserDetails(JoinDto joinDto) {
-		checkIfUsernameExists(joinDto.getUsername());
-		checkIfEmailExists(joinDto.getEmail());
+	private void validateUserDetails(UserJoinDto userJoinDto) {
+		checkIfUsernameExists(userJoinDto.getUsername());
+		checkIfEmailExists(userJoinDto.getEmail());
 	}
 
 	private void checkIfUsernameExists(String username) {
