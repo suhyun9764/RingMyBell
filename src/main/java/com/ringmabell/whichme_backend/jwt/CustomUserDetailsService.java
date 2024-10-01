@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.ringmabell.whichme_backend.entitiy.User;
+import com.ringmabell.whichme_backend.entitiy.user.User;
 import com.ringmabell.whichme_backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;

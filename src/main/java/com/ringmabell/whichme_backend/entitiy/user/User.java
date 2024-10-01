@@ -1,4 +1,6 @@
-package com.ringmabell.whichme_backend.entitiy;
+package com.ringmabell.whichme_backend.entitiy.user;
+
+import com.ringmabell.whichme_backend.entitiy.Role;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

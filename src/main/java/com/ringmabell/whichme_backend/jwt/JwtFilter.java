@@ -7,7 +7,7 @@ import static com.ringmabell.whichme_backend.constants.AuthPolicy.REFRESH_TOKEN_
 
 import com.ringmabell.whichme_backend.entitiy.RefreshToken;
 import com.ringmabell.whichme_backend.entitiy.Role;
-import com.ringmabell.whichme_backend.entitiy.User;
+import com.ringmabell.whichme_backend.entitiy.user.User;
 import com.ringmabell.whichme_backend.repository.RefreshTokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
