@@ -1,6 +1,7 @@
 package com.ringmabell.whichme_backend.constants;
 
-public class SwaggerExampleResponse {
+public class UserSwaggerMessages {
+	public static final String COMPLETE_USER_JOIN_EXAMPLE =  "{ \"success\": true, \"message\": \"회원가입이 완료되었습니다\" }";
 	public static final String USERNAME_DUPLICATE_EXAMPLE = "{ \"success\": false,  \"httpStatus\": \"CONFLICT\", \"code\": 409, \"message\": \"아이디가 중복되었습니다.\" }";
 	public static final String EMAIL_DUPLICATE_EXAMPLE = "{ \"success\": false,  \"httpStatus\": \"CONFLICT\",\"code\": 409, \"message\": \"이메일이 중복되었습니다.\" }";
 	public static final String USERNAME_ERROR_EXAMPLE = "{ \"success\": false,\"httpStatus\": \"BAD_REQUEST\", \"code\": 400, \"message\": \"아이디는 3자 이상 20자 이하여야 합니다.\" }";

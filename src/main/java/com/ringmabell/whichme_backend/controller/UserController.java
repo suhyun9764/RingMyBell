@@ -1,6 +1,6 @@
 package com.ringmabell.whichme_backend.controller;
 
-import static com.ringmabell.whichme_backend.constants.SwaggerExampleResponse.*;
+import static com.ringmabell.whichme_backend.constants.UserSwaggerMessages.*;
 
 import com.ringmabell.whichme_backend.dto.UserJoinDto;
 import com.ringmabell.whichme_backend.response.ErrorResponse;
@@ -37,6 +37,9 @@ public class UserController {
             responseCode = "200",
             description = "회원가입이 완료되었습니다",
             content = @Content(mediaType = "application/json",
+                examples = {
+                    @ExampleObject(name = "회원가입 완료", value = COMPLETE_USER_JOIN_EXAMPLE)
+                },
                 schema = @Schema(implementation = Response.class)
             )
         ),

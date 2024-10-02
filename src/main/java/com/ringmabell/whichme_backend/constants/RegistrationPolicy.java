@@ -9,4 +9,5 @@ public class RegistrationPolicy {
 
     public static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@[a-zA-Z0-9-]+\\.[a-zA-Z]{2,7}$";
     public static final String PASSWORD_REGEX =  "^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
+    public static final String VEHICLE_REGEX = "^(998|999)[가-힣]{1}(?<![ㄱ-ㅎㅏ-ㅣ])[ㄱ-ㅎㅏ-ㅣ]{0}\\d{4}$";
 }

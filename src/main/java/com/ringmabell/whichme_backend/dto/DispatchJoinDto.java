@@ -1,5 +1,6 @@
 package com.ringmabell.whichme_backend.dto;
 
+import static com.ringmabell.whichme_backend.constants.DispatchMessage.*;
 import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.*;
 import static com.ringmabell.whichme_backend.constants.UserMessages.*;
 
@@ -16,8 +17,8 @@ public class DispatchJoinDto {
 	@NotBlank(message = NOT_BLANK_MESSAGE)
 	@NotBlank(message = NOT_BLANK_MESSAGE)
 	@Pattern(
-		regexp = "^(998|999)[가-힣]{1}(?<![ㄱ-ㅎㅏ-ㅣ])[ㄱ-ㅎㅏ-ㅣ]{0}\\d{4}$",
-		message = "차량 번호는 998 또는 999로 시작하고, 받침이 없는 한글 한 글자, 마지막 4자리가 숫자로 구성되어야 합니다."
+		regexp = VEHICLE_REGEX,
+		message = VEHICLE_POLICY_MESSAGE
 	)
 	private String vehicleNumber;
 	@NotNull(message = NOT_BLANK_MESSAGE)
