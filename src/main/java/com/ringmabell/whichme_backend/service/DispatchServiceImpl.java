@@ -1,7 +1,11 @@
 package com.ringmabell.whichme_backend.service;
 
+import static com.ringmabell.whichme_backend.constants.DispatchMessage.*;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.ringmabell.whichme_backend.entitiy.Role;
 import com.ringmabell.whichme_backend.entitiy.dispatch.Dispatch;
 import com.ringmabell.whichme_backend.dto.DispatchJoinDto;
 import com.ringmabell.whichme_backend.entitiy.dispatch.SubUnit;
@@ -18,12 +22,13 @@ import lombok.RequiredArgsConstructor;
 public class DispatchServiceImpl implements DispatchService{
 	private final DispatchRepository dispatchRepository;
 	private final SubUnitRepository subUnitRepository;
+	private final PasswordEncoder passwordEncoder;
 	@Override
 	public Response joinDispatch(DispatchJoinDto dispatchJoinDto) {
 		String vehicleNumber = dispatchJoinDto.getVehicleNumber();
 		SubUnit subUnit = getSubUnit(dispatchJoinDto);
 		if(dispatchRepository.existsByVehicleNumber(vehicleNumber))
-			throw new DuplicateException("이미 등록된 차량입니다");
+			throw new DuplicateException(ALREADY_EXIST_VEHICLE);
 
 		String location = subUnit.getStation().getLocation();
 
@@ -32,16 +37,21 @@ public class DispatchServiceImpl implements DispatchService{
 			.vehicleNumber(vehicleNumber)
 			.activityArea(location)
 			.subUnit(subUnit)
+			.password(passwordEncoder.encode(dispatchJoinDto.getPassword()))
+			.role(Role.ROLE_DISPATCH)
 			.build();
 
 		dispatchRepository.save(dispatch);
 
-		return null;
-	}
+		return Response.builder()
+			.success(true)
+			.message(COMPLETE_VEHICLE_JOIN)
+			.build();
+}
 
 	private SubUnit getSubUnit(DispatchJoinDto dispatchJoinDto) {
 		Long subUnit = dispatchJoinDto.getSubUnit();
 		return subUnitRepository.findById(subUnit).orElseThrow(()->
-			new EntityNotFoundException("없는 소속입니다"));
+			new EntityNotFoundException(NOT_EXIST_SUBUNIT));
 	}
 }
