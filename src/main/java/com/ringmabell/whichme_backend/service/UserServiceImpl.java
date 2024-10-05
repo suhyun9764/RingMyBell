@@ -35,7 +35,7 @@ public class UserServiceImpl implements UserService {
 
 	private User buildUserFromDto(UserJoinDto userJoinDto) {
 		return User.builder()
-			.username(userJoinDto.getUsername())
+			.loginId(userJoinDto.getUsername())
 			.password(passwordEncoder.encode(userJoinDto.getPassword()))
 			.realName(userJoinDto.getRealName())
 			.email(userJoinDto.getEmail())
@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	private void checkIfUsernameExists(String username) {
-		if (userRepository.existsByUsername(username)) {
+		if (userRepository.existsByLoginId(username)) {
 			throw new DuplicateException(ALREADY_EXIST_USERNAME);
 		}
 	}
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
 		if (isInvalidUsernameLength(username)) {
 			return failureResponse(USERNAME_POLICY_MESSAGE);
 		}
-		if (userRepository.existsByUsername(username)) {
+		if (userRepository.existsByLoginId(username)) {
 			return failureResponse(ALREADY_EXIST_USERNAME);
 		}
 		return successResponse(AVAILABLE_USERNAME);
