@@ -4,12 +4,9 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.ringmabell.whichme_backend.entitiy.Member;
 import com.ringmabell.whichme_backend.entitiy.user.User;
 
-public interface UserRepository extends JpaRepository<User, Long> {
-	boolean existsByLoginId(String username);
-
-	boolean existsByEmail(String email);
-
-	Optional<User> findByLoginId(String username);
+public interface MemberRepository extends JpaRepository<Member,Long> {
+	Optional<Member> findByLoginId(String loginId);
 }

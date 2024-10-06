@@ -35,7 +35,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
+    private final CustomUserDetailsService userDetailsService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RefreshTokenRepository refreshTokenRepository;
 
@@ -58,15 +58,15 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                             FilterChain filterChain, Authentication authentication) throws IOException {
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
-        String username = customUserDetails.getUsername();
+        String loginId = customUserDetails.getUsername();
         String role = getUserRole(authentication);
 
-        deleteExistingRefreshToken(username);
+        deleteExistingRefreshToken(loginId);
 
-        String accessToken = jwtUtil.createJwt(username, role, JWT_EXPIRED_MS);
-        String refreshToken = jwtUtil.createRefreshToken(username, role, REFRESH_TOKEN_EXPIRED_MS);
+        String accessToken = jwtUtil.createJwt(loginId, role, JWT_EXPIRED_MS);
+        String refreshToken = jwtUtil.createRefreshToken(loginId, role, REFRESH_TOKEN_EXPIRED_MS);
 
-        saveRefreshToken(username, refreshToken);
+        saveRefreshToken(loginId, refreshToken);
         setAuthHeaders(response, accessToken, refreshToken);
 
         writeJsonResponse(response, Response.builder()
@@ -86,18 +86,27 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     }
 
     private UsernamePasswordAuthenticationToken createAuthToken(LoginDto loginDto) {
-        String username = loginDto.getUsername();
+        String username = loginDto.getLoginId();
         String password = loginDto.getPassword();
+        int loginType = loginDto.getLoginType();
 
-        validateUser(username);
+        validateUser(username,loginType);
 
         return new UsernamePasswordAuthenticationToken(username, password);
     }
 
-    private void validateUser(String username) {
-        if (userDetailsService.loadUserByUsername(username) == null) {
+    private void validateUser(String loginId,int loginType) {
+        if(loginType==1){
+            if (userDetailsService.loadUserByUsername(loginId) == null) {
+                throw new UsernameNotFoundException(INVALID_USERNAME);
+            }
+            return;
+        }
+
+        if(userDetailsService.loadDispatchByUsername(loginId)==null){
             throw new UsernameNotFoundException(INVALID_USERNAME);
         }
+
     }
 
     private String getUserRole(Authentication authentication) {

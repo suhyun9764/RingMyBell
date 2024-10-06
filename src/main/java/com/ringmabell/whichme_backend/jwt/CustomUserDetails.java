@@ -6,20 +6,21 @@ import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.ringmabell.whichme_backend.entitiy.user.User;
+import com.ringmabell.whichme_backend.entitiy.Member;
 
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
-	private final User user;
+	private final Member member;
+
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		Collection<GrantedAuthority> collection = new ArrayList<>();
 		collection.add(new GrantedAuthority() {
 			@Override
 			public String getAuthority() {
-				return user.getRole().toString();
+				return member.getRole().toString();
 			}
 		});
 
@@ -28,11 +29,11 @@ public class CustomUserDetails implements UserDetails {
 
 	@Override
 	public String getPassword() {
-		return user.getPassword();
+		return member.getPassword();
 	}
 
 	@Override
 	public String getUsername() {
-		return user.getUsername();
+		return member.getLoginId();
 	}
 }
