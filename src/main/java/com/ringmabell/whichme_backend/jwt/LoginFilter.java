@@ -97,13 +97,13 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private void validateUser(String loginId,int loginType) {
         if(loginType==1){
-            if (userDetailsService.loadUserByUsername(loginId) == null) {
+            if (!userDetailsService.isExistByUsername(loginId)) {
                 throw new UsernameNotFoundException(INVALID_USERNAME);
             }
             return;
         }
 
-        if(userDetailsService.loadDispatchByUsername(loginId)==null){
+        if(!userDetailsService.isExistByVehicleNumber(loginId)){
             throw new UsernameNotFoundException(INVALID_USERNAME);
         }
 

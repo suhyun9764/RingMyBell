@@ -32,11 +32,11 @@ public class CustomUserDetailsService implements UserDetailsService {
 		return null;
 	}
 
-	public UserDetails loadDispatchByUsername(String vehicleNumber) throws UsernameNotFoundException {
-		Optional<Dispatch> dispatchData = dispatchRepository.findByLoginId(vehicleNumber);
-		if (dispatchData.isPresent())
-			return new CustomUserDetails(dispatchData.get());
+	public boolean isExistByVehicleNumber(String vehicleNumber){
+		return dispatchRepository.existsByLoginId(vehicleNumber);
+	}
 
-		return null;
+	public boolean isExistByUsername(String username){
+		return userRepository.existsByLoginId(username);
 	}
 }
