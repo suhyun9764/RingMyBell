@@ -41,7 +41,7 @@ public class SecurityConfig {
 
 		http
 			.authorizeHttpRequests((auth) -> auth
-				.requestMatchers("/api/user/**", "/api-test", "/api/dispatch/join").permitAll()
+				.requestMatchers("/api/user/**", "/api-test", "/api/dispatch/join/**").permitAll()
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 				.requestMatchers("/api/test/**").hasRole("DISPATCH")
 				.anyRequest().authenticated());

@@ -1,10 +1,10 @@
 package com.ringmabell.whichme_backend.controller;
 
-import static com.ringmabell.whichme_backend.constants.DispatchMessage.*;
 import static com.ringmabell.whichme_backend.constants.DispatchSwaggerMessages.*;
 import static com.ringmabell.whichme_backend.constants.UserSwaggerMessages.*;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DispatchController {
 	private final DispatchService dispatchService;
-
 
 	@Operation(summary = "응급차량 회원가입 API")
 	@ApiResponses(value = {
@@ -79,7 +78,23 @@ public class DispatchController {
 		)
 	})
 	@PostMapping("/join")
-	public ResponseEntity<Response> join(@RequestBody @Valid DispatchJoinDto dispatchJoinDto){
+	public ResponseEntity<Response> join(@RequestBody @Valid DispatchJoinDto dispatchJoinDto) {
 		return ResponseEntity.ok(dispatchService.joinDispatch(dispatchJoinDto));
+	}
+
+	@GetMapping("/join/search/station-subunit")
+	@Operation(summary = "기관 및 하위 부서 검색 API")
+	@ApiResponses(value = {
+		@ApiResponse(
+			responseCode = "200",
+			description = "검색 완료",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = Response.class)
+			)
+		)
+	})
+	public ResponseEntity<Response> searchStationAndSubUnit() {
+		return ResponseEntity.ok(dispatchService.findAllStationAndSubUnit());
 	}
 }
