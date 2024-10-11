@@ -6,6 +6,7 @@ import static com.ringmabell.whichme_backend.constants.UserMessages.*;
 
 import com.ringmabell.whichme_backend.entitiy.dispatch.SubUnit;
 
+import com.ringmabell.whichme_backend.entitiy.dispatch.VehicleType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -30,4 +31,5 @@ public class DispatchJoinDto {
 		message = PASSWORD_POLICY_MESSAGE
 	)
 	private String password;
+	private VehicleType vehicleType;
 }

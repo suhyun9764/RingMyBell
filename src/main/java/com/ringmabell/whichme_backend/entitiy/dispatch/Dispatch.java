@@ -4,6 +4,8 @@ import com.ringmabell.whichme_backend.entitiy.Member;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
@@ -21,5 +23,7 @@ public class Dispatch extends Member {
 	private SubUnit subUnit;
 	@Column(nullable = false)
 	private String activityArea;
+	@Enumerated(value = EnumType.STRING)
+	private VehicleType vehicleType;
 
 }
