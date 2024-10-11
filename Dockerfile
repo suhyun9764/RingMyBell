@@ -7,4 +7,4 @@ COPY build/libs/*.jar /app/WhichMe_Backend.jar
 EXPOSE 8080
 
 # JAR 파일을 실행
-ENTRYPOINT ["java", "-jar", "/app/CoupleShare-Backend.jar"]
+ENTRYPOINT ["java", "-jar", "/app/WhichMe_Backend.jar"]

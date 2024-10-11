@@ -7,10 +7,13 @@ import static com.ringmabell.whichme_backend.constants.UserMessages.*;
 import com.ringmabell.whichme_backend.entitiy.dispatch.SubUnit;
 
 import com.ringmabell.whichme_backend.entitiy.dispatch.VehicleType;
+import com.ringmabell.whichme_backend.entitiy.user.Disease;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.Set;
 import lombok.Getter;
 
 @Getter
@@ -31,5 +34,12 @@ public class DispatchJoinDto {
 		message = PASSWORD_POLICY_MESSAGE
 	)
 	private String password;
+
+	@Schema(description = "차량 종류: EMERGENCY (0) - 응급 차량, "
+			+ "FIRE (1) - 소방차량, "
+			+ "POLICE (2) - 경찰 차량, "
+			+ "COURT (3) - 법정 차량, "
+			+ "EVACUATION (4) - 후송차량, "
+			+ "ETC (5) - 기타")
 	private VehicleType vehicleType;
 }
