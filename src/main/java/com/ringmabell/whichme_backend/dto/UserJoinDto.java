@@ -50,5 +50,12 @@ public class UserJoinDto {
     @NotBlank(message = NOT_BLANK_MESSAGE)
     @Pattern(regexp = BIRTHDAY_REGEX, message = BIRTHDAY_TYPE_ERROR)
     private String birthday;  // 8자리 생년월일
+    @Schema(description = "질병 목록 (복수 선택 가능). 질병 설명: "
+            + "0: 심장병, "
+            + "1: 빈혈, "
+            + "2: 이석증, "
+            + "3: 눈 관련 질환, "
+            + "4: 고혈압, "
+            + "5: 저혈압")
     private Set<Disease> diseases;
 }
