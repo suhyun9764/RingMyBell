@@ -13,10 +13,12 @@ import static com.ringmabell.whichme_backend.constants.UserMessages.NOT_BLANK_ME
 import static com.ringmabell.whichme_backend.constants.UserMessages.PASSWORD_POLICY_MESSAGE;
 import static com.ringmabell.whichme_backend.constants.UserMessages.USERNAME_POLICY_MESSAGE;
 
+import com.ringmabell.whichme_backend.entitiy.user.Disease;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.Set;
 import lombok.Getter;
 
 @Getter
@@ -48,5 +50,5 @@ public class UserJoinDto {
     @NotBlank(message = NOT_BLANK_MESSAGE)
     @Pattern(regexp = BIRTHDAY_REGEX, message = BIRTHDAY_TYPE_ERROR)
     private String birthday;  // 8자리 생년월일
-
+    private Set<Disease> diseases;
 }

@@ -48,6 +48,7 @@ public class UserServiceImpl implements UserService {
                 .address(userJoinDto.getAddress())
                 .birthday(userJoinDto.getBirthday())
                 .role(Role.ROLE_USER)
+                .diseases(userJoinDto.getDiseases())
                 .build();
     }
 
