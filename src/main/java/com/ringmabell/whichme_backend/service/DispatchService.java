@@ -5,4 +5,6 @@ import com.ringmabell.whichme_backend.response.Response;
 
 public interface DispatchService {
 	Response joinDispatch(DispatchJoinDto dispatchJoinDto);
+
+	Response findAllStationAndSubUnit();
 }

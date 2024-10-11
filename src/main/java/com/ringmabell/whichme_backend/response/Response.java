@@ -7,6 +7,6 @@ import lombok.Getter;
 @Getter
 public class Response {
 	private final boolean success;
-	private final String message;
+	private final Object message;
 
 }
