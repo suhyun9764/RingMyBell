@@ -1,11 +1,13 @@
 package com.ringmabell.whichme_backend.dto;
 
+import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.BIRTHDAY_REGEX;
 import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.EMAIL_REGEX;
 import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.PASSWORD_MAX_LENGTH;
 import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.PASSWORD_MIN_LENGTH;
 import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.PASSWORD_REGEX;
 import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.USERNAME_MAX_LENGTH;
 import static com.ringmabell.whichme_backend.constants.RegistrationPolicy.USERNAME_MIN_LENGTH;
+import static com.ringmabell.whichme_backend.constants.UserMessages.BIRTHDAY_TYPE_ERROR;
 import static com.ringmabell.whichme_backend.constants.UserMessages.EMAIL_POLICY_MESSAGE;
 import static com.ringmabell.whichme_backend.constants.UserMessages.NOT_BLANK_MESSAGE;
 import static com.ringmabell.whichme_backend.constants.UserMessages.PASSWORD_POLICY_MESSAGE;
@@ -43,5 +45,8 @@ public class UserJoinDto {
     private String phone;
     @NotBlank(message = NOT_BLANK_MESSAGE)
     private String address;
+    @NotBlank(message = NOT_BLANK_MESSAGE)
+    @Pattern(regexp = BIRTHDAY_REGEX, message = BIRTHDAY_TYPE_ERROR)
+    private String birthday;  // 8자리 생년월일
 
 }
