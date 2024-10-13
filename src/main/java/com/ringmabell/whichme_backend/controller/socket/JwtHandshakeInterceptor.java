@@ -18,7 +18,6 @@ import com.ringmabell.whichme_backend.jwt.JwtUtil;
 
 @Component
 public class JwtHandshakeInterceptor extends HttpSessionHandshakeInterceptor {
-
 	private final JwtUtil jwtUtil;
 
 	public JwtHandshakeInterceptor(JwtUtil jwtUtil) {
@@ -27,52 +26,53 @@ public class JwtHandshakeInterceptor extends HttpSessionHandshakeInterceptor {
 
 	@Override
 	public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
-		WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+								   WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
 		HttpHeaders headers = request.getHeaders();
-		String authHeader = headers.getFirst("Authorization");  // Authorization 헤더 가져오기
+		String authHeader = headers.getFirst("Authorization");
 
-		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-			// JWT 토큰이 없거나 잘못된 경우, HTTP 401 Unauthorized 상태 설정
+		// URL 경로로 소켓 핸들러 구분
+		String requestUri = request.getURI().getPath();
+
+		// JWT 토큰 검증
+		CustomUserDetails userDetails = validateToken(authHeader, response);
+		if (userDetails == null) {
+			return false;  // 유효하지 않은 토큰이거나 권한 없음
+		}
+
+		// 역할(Role)에 따라 조건적 핸드셰이크
+		if (requestUri.contains("/vehicle-socket") && !hasRequiredRole(userDetails, "ROLE_DISPATCH")) {
 			response.setStatusCode(HttpStatus.UNAUTHORIZED);
-			return false;  // 핸드셰이크 실패
-		}
-
-		String token = authHeader.substring(7);  // "Bearer " 이후의 실제 JWT 토큰 추출
-
-		// JWT 검증 로직 추가
-		if (!isValidToken(token)) {
-			// 토큰이 유효하지 않은 경우, HTTP 403 Forbidden 상태 설정
-			response.setStatusCode(HttpStatus.FORBIDDEN);
-			return false;  // 핸드셰이크 실패
-		}
-
-		// 토큰이 유효하면 사용자 정보를 설정
-		CustomUserDetails userDetails = createUserDetails(token);
-
-		boolean isDispatch = userDetails.getAuthorities().stream()
-			.map(GrantedAuthority::getAuthority)
-			.anyMatch(role -> role.equals("ROLE_DISPATCH"));
-
-		if (!isDispatch) {
+			return false;  // 응급차량 소켓 핸들러에 ROLE_DISPATCH가 아닌 사용자가 접근한 경우
+		} else if (requestUri.contains("/user-socket") && !hasRequiredRole(userDetails, "ROLE_USER")) {
 			response.setStatusCode(HttpStatus.UNAUTHORIZED);
-			return false;  // 핸드셰이크 실패
+			return false;  // 일반 사용자 소켓 핸들러에 ROLE_USER가 아닌 사용자가 접근한 경우
 		}
 
+		// 사용자 정보를 WebSocket 세션에 저장
 		attributes.put("userDetails", userDetails);
 		return true;  // 핸드셰이크 성공
+	}
+
+	// JWT 토큰을 검증하고 CustomUserDetails 반환
+	private CustomUserDetails validateToken(String authHeader, ServerHttpResponse response) {
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+			response.setStatusCode(HttpStatus.UNAUTHORIZED); // JWT 토큰이 없거나 잘못된 경우
+			return null;
+		}
+
+		String token = authHeader.substring(7);
+		if (!isValidToken(token)) {
+			response.setStatusCode(HttpStatus.FORBIDDEN); // 토큰이 유효하지 않은 경우
+			return null;
+		}
+
+		return createUserDetails(token);
 	}
 
 	// 토큰 유효성 검증 로직
 	private boolean isValidToken(String token) {
 		try {
-			// 토큰이 만료되었는지 확인
-			if (jwtUtil.isExpired(token)) {
-				return false;
-			}
-
-			// 추가 검증을 원할 경우 추가 가능
-			String username = jwtUtil.getUsername(token);
-			return username != null;
+			return !jwtUtil.isExpired(token) && jwtUtil.getUsername(token) != null;
 		} catch (Exception e) {
 			return false;
 		}
@@ -84,10 +84,17 @@ public class JwtHandshakeInterceptor extends HttpSessionHandshakeInterceptor {
 		String role = jwtUtil.getRole(token);
 
 		Member member = Member.builder()
-			.loginId(username)
-			.role(Role.valueOf(role))  // Role enum을 사용하여 역할 설정
-			.build();
+				.loginId(username)
+				.role(Role.valueOf(role))
+				.build();
 
 		return new CustomUserDetails(member);
+	}
+
+	// 사용자가 특정 권한을 가지고 있는지 확인
+	private boolean hasRequiredRole(CustomUserDetails userDetails, String requiredRole) {
+		return userDetails.getAuthorities().stream()
+				.map(GrantedAuthority::getAuthority)
+				.anyMatch(role -> role.equals(requiredRole));
 	}
 }

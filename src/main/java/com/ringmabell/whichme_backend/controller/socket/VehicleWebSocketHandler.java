@@ -1,5 +1,7 @@
 package com.ringmabell.whichme_backend.controller.socket;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -45,10 +47,25 @@ public class VehicleWebSocketHandler extends TextWebSocketHandler {
 			ObjectMapper objectMapper = new ObjectMapper();
 			DispatchPositionDto dispatchPositionDto = objectMapper.readValue(message.getPayload(),
 				DispatchPositionDto.class);
+			notifyToUsers(dispatchPositionDto);
 			System.out.println(vehicleSessions.size());
 		} else {
 			System.out.println("차량 ID를 찾을 수 없음.");
 		}
+	}
+
+	private void notifyToUsers(DispatchPositionDto dispatchPositionDto) throws JsonProcessingException {
+		ObjectMapper objectMapper = new ObjectMapper();
+		String json = objectMapper.writeValueAsString(dispatchPositionDto);
+		for(WebSocketSession userSession : UserWebSocketHandler.userSessions.values()) {
+			try {
+				if(userSession.isOpen()) {
+					userSession.sendMessage(new TextMessage(json));
+				}
+			} catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
 	}
 
 	@Override

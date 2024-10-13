@@ -21,5 +21,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
 		registry.addHandler(new VehicleWebSocketHandler(), "/vehicle-socket")
 			.setAllowedOrigins("*")
 			.addInterceptors(jwtHandshakeInterceptor);
+
+		registry.addHandler(new UserWebSocketHandler(),"/user-socket")
+				.setAllowedOrigins("*")
+				.addInterceptors(jwtHandshakeInterceptor);
 	}
 }
