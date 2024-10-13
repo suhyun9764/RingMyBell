@@ -8,6 +8,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ringmabell.whichme_backend.dto.DispatchPositionDto;
 import com.ringmabell.whichme_backend.jwt.CustomUserDetails;
 
 public class VehicleWebSocketHandler extends TextWebSocketHandler {
@@ -37,11 +39,12 @@ public class VehicleWebSocketHandler extends TextWebSocketHandler {
 
 	@Override
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-		// 차량 ID가 주기적으로 전송될 때 처리
 		String vehicleId = getVehicleIdFromSession(session);
 		if (vehicleId != null) {
 			System.out.println("차량 " + vehicleId + "가 서버에 위치를 전송 중...");
-			System.out.println(message);
+			ObjectMapper objectMapper = new ObjectMapper();
+			DispatchPositionDto dispatchPositionDto = objectMapper.readValue(message.getPayload(),
+				DispatchPositionDto.class);
 			System.out.println(vehicleSessions.size());
 		} else {
 			System.out.println("차량 ID를 찾을 수 없음.");
