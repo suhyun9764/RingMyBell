@@ -3,10 +3,13 @@ package com.ringmabell.whichme_backend.service;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.geo.Circle;
+import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.domain.geo.Metrics;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -45,8 +48,10 @@ public class GeoService {
     // 특정 위치 근처의 차량 조회
     public List<String> findNearbyVehicles(double longitude, double latitude, double radius) {
         // radius는 미터 단위
+
+        Circle searchArea = new Circle( new Point(longitude, latitude), new Distance(radius, Metrics.METERS));
         GeoResults<GeoLocation<Object>> results = redisTemplate.opsForGeo()
-                .radius(VEHICLE_KEY, new Point(longitude, latitude), radius);
+                .radius(USER_KEY, searchArea);
 
         return results.getContent().stream()
                 .map(geoResult -> (String)geoResult.getContent().getName())
