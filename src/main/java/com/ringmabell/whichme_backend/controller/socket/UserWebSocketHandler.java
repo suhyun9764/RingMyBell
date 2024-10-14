@@ -1,23 +1,29 @@
 package com.ringmabell.whichme_backend.controller.socket;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ringmabell.whichme_backend.dto.DispatchPositionDto;
+import com.ringmabell.whichme_backend.dto.LocationDto;
 import com.ringmabell.whichme_backend.jwt.CustomUserDetails;
+import com.ringmabell.whichme_backend.service.GeoService;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.WebSocketMessage;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 
 @Component
+@RequiredArgsConstructor
 public class UserWebSocketHandler extends TextWebSocketHandler {
 
     public static ConcurrentHashMap<String, WebSocketSession> userSessions = new ConcurrentHashMap<>();
-
+    private final GeoService geoService;
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        CustomUserDetails userDetails = (CustomUserDetails)session.getAttributes().get("userDetails");
+        CustomUserDetails userDetails = (CustomUserDetails) session.getAttributes().get("userDetails");
 
         boolean isUser = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -35,8 +41,20 @@ public class UserWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
+    public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        String username = getUsernameFromSession(session);
+        if (username != null) {
+            System.out.println("차량 " + username + "가 서버에 위치를 전송 중...");
+            ObjectMapper objectMapper = new ObjectMapper();
+            LocationDto locationDto = objectMapper.readValue(message.getPayload(),
+                    LocationDto.class);
 
+            geoService.addUserLocation(username, locationDto.getLatitude(),
+                    locationDto.getLongitude());
+
+        } else {
+            System.out.println("차량 ID를 찾을 수 없음.");
+        }
     }
 
 
