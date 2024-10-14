@@ -53,6 +53,9 @@ public class GeoService {
         GeoResults<GeoLocation<Object>> results = redisTemplate.opsForGeo()
                 .radius(USER_KEY, searchArea);
 
+        if(results.getContent().isEmpty()) {
+            return null;
+        }
         return results.getContent().stream()
                 .map(geoResult -> (String)geoResult.getContent().getName())
                 .collect(Collectors.toList());

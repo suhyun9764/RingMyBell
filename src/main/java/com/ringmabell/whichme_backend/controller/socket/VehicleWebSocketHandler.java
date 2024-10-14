@@ -56,23 +56,30 @@ public class VehicleWebSocketHandler extends TextWebSocketHandler {
             List<String> nearbyVehicles = geoService.findNearbyVehicles(
                     dispatchPositionDto.getCurrentLocation().getLongitude(),
                     dispatchPositionDto.getCurrentLocation().getLatitude(), 200);
-            System.out.println(nearbyVehicles.get(0));
-            notifyToUsers(dispatchPositionDto);
+            if(nearbyVehicles != null) {
+                notifyToUsers(dispatchPositionDto,nearbyVehicles);
+            }
+
             System.out.println(vehicleSessions.size());
         } else {
             System.out.println("차량 ID를 찾을 수 없음.");
         }
     }
 
-    private void notifyToUsers(DispatchPositionDto dispatchPositionDto) throws JsonProcessingException {
+    private void notifyToUsers(DispatchPositionDto dispatchPositionDto, List<String> nearbyVehicles) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
-        String json = objectMapper.writeValueAsString(dispatchPositionDto);
+        String message = objectMapper.writeValueAsString(dispatchPositionDto);
 
         for (WebSocketSession userSession : UserWebSocketHandler.userSessions.values()) {
             try {
                 if (userSession.isOpen()) {
-                    userSession.sendMessage(new TextMessage(json));
+                    String username = userSession.getPrincipal().getName();
+                    if(nearbyVehicles.contains(username)) {
+                        userSession.sendMessage(new TextMessage(message));
+                    }
+
                 }
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
