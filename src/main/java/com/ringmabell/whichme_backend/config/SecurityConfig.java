@@ -1,5 +1,8 @@
 package com.ringmabell.whichme_backend.config;
 
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.Collections;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,6 +23,8 @@ import com.ringmabell.whichme_backend.jwt.LoginFilter;
 import com.ringmabell.whichme_backend.repository.RefreshTokenRepository;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @RequiredArgsConstructor
@@ -45,6 +50,26 @@ public class SecurityConfig {
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 				.requestMatchers("/api/test/**").hasRole("USER")
 				.anyRequest().authenticated());
+
+		http
+				.cors((cors) -> cors
+						.configurationSource(new CorsConfigurationSource() {
+							@Override
+							public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+								CorsConfiguration corsConfiguration = new CorsConfiguration();
+
+								corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+								corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
+								corsConfiguration.setAllowCredentials(true);
+								corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
+								corsConfiguration.setMaxAge(3600L);
+
+								corsConfiguration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
+
+
+								return corsConfiguration;
+							}
+						}));
 
 		// 로그인 필터(성공시 jwt 발급)후 jwt 검증
 		http
