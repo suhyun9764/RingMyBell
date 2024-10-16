@@ -43,7 +43,7 @@ public class SecurityConfig {
 			.authorizeHttpRequests((auth) -> auth
 				.requestMatchers("/api/user/**", "/api-test", "/api/dispatch/join/**").permitAll()
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-				.requestMatchers("/api/test/**").hasRole("DISPATCH")
+				.requestMatchers("/api/test/**").hasRole("USER")
 				.anyRequest().authenticated());
 
 		// 로그인 필터(성공시 jwt 발급)후 jwt 검증
