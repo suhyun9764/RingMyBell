@@ -1,0 +1,68 @@
+# Spring Boot Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-service
+  template:
+    metadata:
+      labels:
+        app: backend-service
+    spec:
+      containers:
+        - name: backend-service
+          image: e22cpepg.kr.private-ncr.ntruss.com/ringmybell:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS_HOST
+              value: "redisc-pjp9m.vpc-cdb.ntruss.com"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://db-pjetp.vpc-cdb.ntruss.com:3306/ringmybell"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "wang"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "wbk990131~"
+      imagePullSecrets:
+        - name: kingbk  # Naver Container Registry 인증 정보
+
+---
+# Spring Boot Backend Service (LoadBalancer)
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  type: NodePort
+  selector:
+    app: backend-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-backend-app
+  annotations:
+    alb.ingress.kubernetes.io/description: 'Backend Service Ingress'
+    alb.ingress.kubernetes.io/load-balancer-name: 'backend-alb'
+    alb.ingress.kubernetes.io/ssl-certificate-no: "33434"  # SSL 인증서 ARN (올바른 ARN 사용 필요)
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'  # HTTPS 포트만 허용
+    alb.ingress.kubernetes.io/enable-sticky-session: "true"
+spec:
+  ingressClassName: alb
+  defaultBackend:
+    service:
+      name: backend-service
+      port:
+        number: 80
