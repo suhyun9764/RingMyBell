@@ -1,28 +1,28 @@
 package com.ringmabell.whichme_backend.jwt;
 
-import static com.ringmabell.whichme_backend.constants.AuthPolicy.*;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
-
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.filter.OncePerRequestFilter;
+import static com.ringmabell.whichme_backend.constants.AuthPolicy.AUTHORIZATION_HEADER;
+import static com.ringmabell.whichme_backend.constants.AuthPolicy.AUTHORIZATION_PREFIX;
+import static com.ringmabell.whichme_backend.constants.AuthPolicy.JWT_EXPIRED_MS;
+import static com.ringmabell.whichme_backend.constants.AuthPolicy.REFRESH_TOKEN_EXPIRED_MS;
 
 import com.ringmabell.whichme_backend.entitiy.Member;
 import com.ringmabell.whichme_backend.entitiy.RefreshToken;
 import com.ringmabell.whichme_backend.entitiy.Role;
 import com.ringmabell.whichme_backend.repository.RefreshTokenRepository;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -132,7 +132,7 @@ public class JwtFilter extends OncePerRequestFilter {
 	private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
 		Cookie refreshTokenCookie = new Cookie("Refresh-Token", refreshToken);
 		refreshTokenCookie.setHttpOnly(true); // JavaScript에서 접근 불가
-		// refreshTokenCookie.setSecure(true); // HTTPS에서만 전송 (추후 주석 해제)
+		refreshTokenCookie.setSecure(true); // HTTPS에서만 전송 (추후 주석 해제)
 		refreshTokenCookie.setPath("/"); // 모든 경로에서 사용 가능
 		refreshTokenCookie.setMaxAge((int)(REFRESH_TOKEN_EXPIRED_MS / 1000)); // 쿠키 유효기간 설정
 		response.addCookie(refreshTokenCookie);

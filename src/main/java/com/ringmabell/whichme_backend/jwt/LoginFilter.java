@@ -130,6 +130,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         Cookie refreshTokenCookie = new Cookie("Refresh-Token", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true); // HTTPS에서만 전송 (추후 주석 해제)
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge((int) (REFRESH_TOKEN_EXPIRED_MS / 1000));
         response.addCookie(refreshTokenCookie);
