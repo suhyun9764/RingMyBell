@@ -19,6 +19,4 @@ public class TestController {
         String username = userDetails.getUsername();
         return ResponseEntity.ok().body(username);
     }
-
-
 }

@@ -63,10 +63,7 @@ public class SecurityConfig {
 								corsConfiguration.setAllowCredentials(true);
 								corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
 								corsConfiguration.setMaxAge(3600L);
-
 								corsConfiguration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
-
-
 								return corsConfiguration;
 							}
 						}));

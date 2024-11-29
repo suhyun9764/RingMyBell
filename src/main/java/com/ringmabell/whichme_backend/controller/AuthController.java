@@ -56,7 +56,6 @@ public class AuthController {
 		// 이 메서드는 실제로 호출되지 않으며 Swagger 문서화를 위한 것.
 		// 실제 로직은 LoginFilter에서 처리됩니다.
 
-		// 예시 응답 헤더 및 쿠키 설정
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Authorization", "Bearer [Access-Token]");
 		Cookie refreshTokenCookie = new Cookie("Refresh-Token", "[Refresh-Token]");
